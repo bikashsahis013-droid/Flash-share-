@@ -1,0 +1,170 @@
+name: Build FlashShare APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Android project
+        run: |
+          mkdir -p app/src/main/java/com/flashshare/app
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
+
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "FlashShare"
+          include ":app"
+          EOF
+
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+              id 'org.jetbrains.kotlin.android' version '2.0.21' apply false
+          }
+          EOF
+
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
+          android {
+              namespace 'com.flashshare.app'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId 'com.flashshare.app'
+                  minSdk 26
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:theme="@style/AppTheme"
+                  android:label="FlashShare">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme"
+                  parent="android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:colorAccent">#246BFD</item>
+                  <item name="android:navigationBarColor">#0B1220</item>
+                  <item name="android:statusBarColor">#0B1220</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > app/src/main/res/layout/activity_main.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <LinearLayout
+              xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:gravity="center"
+              android:padding="24dp">
+
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="⚡ FlashShare"
+                  android:textSize="32sp"
+                  android:textStyle="bold"/>
+
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="Fast Android-to-Android Transfer"
+                  android:textSize="16sp"
+                  android:layout_marginTop="8dp"/>
+
+              <Button
+                  android:id="@+id/send"
+                  android:layout_width="match_parent"
+                  android:layout_height="60dp"
+                  android:text="📤 SEND FILES"
+                  android:layout_marginTop="35dp"/>
+
+              <Button
+                  android:id="@+id/receive"
+                  android:layout_width="match_parent"
+                  android:layout_height="60dp"
+                  android:text="📥 RECEIVE"
+                  android:layout_marginTop="15dp"/>
+
+          </LinearLayout>
+          EOF
+
+          cat > app/src/main/java/com/flashshare/app/MainActivity.kt <<'EOF'
+          package com.flashshare.app
+
+          import android.app.Activity
+          import android.os.Bundle
+          import android.widget.Button
+          import android.widget.Toast
+
+          class MainActivity : Activity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  setContentView(R.layout.activity_main)
+
+                  findViewById<Button>(R.id.send).setOnClickListener {
+                      Toast.makeText(this, "Select files — transfer engine coming next", Toast.LENGTH_SHORT).show()
+                  }
+
+                  findViewById<Button>(R.id.receive).setOnClickListener {
+                      Toast.makeText(this, "Receive mode ready", Toast.LENGTH_SHORT).show()
+                  }
+              }
+          }
+          EOF
+
+      - name: Install Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip
+
+      - name: Build APK
+        run: |
+          ./gradle-8.9/bin/gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlashShare-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
