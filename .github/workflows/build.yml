@@ -22,6 +22,7 @@ jobs:
                   gradlePluginPortal()
               }
           }
+
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
@@ -29,8 +30,9 @@ jobs:
                   mavenCentral()
               }
           }
+
           rootProject.name = "FlashShare"
-          include ":app"
+          include(":app")
           EOF
 
           cat > build.gradle <<'EOF'
@@ -50,6 +52,15 @@ jobs:
               namespace 'com.flashshare.app'
               compileSdk 35
 
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+
               defaultConfig {
                   applicationId 'com.flashshare.app'
                   minSdk 26
@@ -65,13 +76,16 @@ jobs:
               <application
                   android:theme="@style/AppTheme"
                   android:label="FlashShare">
+
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
                       </intent-filter>
+
                   </activity>
               </application>
           </manifest>
@@ -117,14 +131,14 @@ jobs:
                   android:id="@+id/send"
                   android:layout_width="match_parent"
                   android:layout_height="60dp"
-                  android:text="📤 SEND FILES"
+                  android:text="SEND FILES"
                   android:layout_marginTop="35dp"/>
 
               <Button
                   android:id="@+id/receive"
                   android:layout_width="match_parent"
                   android:layout_height="60dp"
-                  android:text="📥 RECEIVE"
+                  android:text="RECEIVE"
                   android:layout_marginTop="15dp"/>
 
           </LinearLayout>
@@ -139,16 +153,25 @@ jobs:
           import android.widget.Toast
 
           class MainActivity : Activity() {
+
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContentView(R.layout.activity_main)
 
                   findViewById<Button>(R.id.send).setOnClickListener {
-                      Toast.makeText(this, "Select files — transfer engine coming next", Toast.LENGTH_SHORT).show()
+                      Toast.makeText(
+                          this,
+                          "Send mode selected",
+                          Toast.LENGTH_SHORT
+                      ).show()
                   }
 
                   findViewById<Button>(R.id.receive).setOnClickListener {
-                      Toast.makeText(this, "Receive mode ready", Toast.LENGTH_SHORT).show()
+                      Toast.makeText(
+                          this,
+                          "Receive mode selected",
+                          Toast.LENGTH_SHORT
+                      ).show()
                   }
               }
           }
